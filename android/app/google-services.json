@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "309930970714",
+    "project_id": "go-sampah-v2-baru",
+    "storage_bucket": "go-sampah-v2-baru.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:309930970714:android:d9a55e472b39a534e15263",
+        "android_client_info": {
+          "package_name": "com.gosampah.go_sampah_v2"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBJ9zAbZ4EIHcb1SwvTE9n06dVvoy0TQpc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
