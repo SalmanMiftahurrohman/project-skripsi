@@ -1,17 +1,41 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+/// Model data [UserModel] merepresentasikan profil pengguna di sistem GO - SAMPAH.
+/// Model ini menampung informasi untuk semua jenis peran (role), yaitu masyarakat, petugas, dan admin.
 class UserModel {
+  /// ID unik pengguna yang dihasilkan oleh Firebase Authentication (UID).
   final String uid;
+
+  /// Alamat email terdaftar pengguna.
   final String email;
+
+  /// Nama lengkap pengguna.
   final String name;
-  final String role; // 'masyarakat', 'petugas', 'admin'
+
+  /// Peran hak akses pengguna di aplikasi.
+  /// 
+  /// Nilai yang valid: 'masyarakat', 'petugas', 'admin'.
+  final String role;
+
+  /// Nomor telepon aktif pengguna.
   final String phoneNumber;
+
+  /// Tanggal lahir pengguna (format: DD-MM-YYYY).
   final String birthDate;
+
+  /// Pekerjaan atau profesi pengguna saat ini.
   final String occupation;
+
+  /// Alamat tempat tinggal pengguna saat ini.
   final String address;
+
+  /// URL foto profil pengguna yang disimpan di Firebase Storage.
   final String profileImageUrl;
+
+  /// Tanggal pembuatan akun pertama kali.
   final DateTime createdAt;
 
+  /// Membuat instance baru dari [UserModel].
   UserModel({
     required this.uid,
     required this.email,
@@ -25,6 +49,7 @@ class UserModel {
     required this.createdAt,
   });
 
+  /// Mengonversi map mentah dari Firestore ([map]) dan [uid] dokumen menjadi objek [UserModel].
   factory UserModel.fromMap(Map<String, dynamic> map, String uid) {
     return UserModel(
       uid: uid,
@@ -40,6 +65,7 @@ class UserModel {
     );
   }
 
+  /// Mengonversi objek [UserModel] menjadi format [Map] untuk disimpan di Firestore.
   Map<String, dynamic> toMap() {
     return {
       'email': email,
@@ -54,6 +80,8 @@ class UserModel {
     };
   }
 
+  /// Membuat salinan objek [UserModel] baru dengan mengubah beberapa atribut tertentu
+  /// tanpa mengubah atribut lainnya yang ada.
   UserModel copyWith({
     String? name,
     String? phoneNumber,
@@ -65,8 +93,8 @@ class UserModel {
     return UserModel(
       uid: uid,
       email: email,
-      name: name ?? this.name,
       role: role,
+      name: name ?? this.name,
       phoneNumber: phoneNumber ?? this.phoneNumber,
       birthDate: birthDate ?? this.birthDate,
       occupation: occupation ?? this.occupation,

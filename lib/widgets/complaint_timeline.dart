@@ -4,9 +4,13 @@ import '../core/constants/app_colors.dart';
 import '../core/utils/date_formatter.dart';
 import '../models/complaint_model.dart';
 
+/// Widget [ComplaintTimeline] menampilkan linimasa (timeline) alur penanganan
+/// laporan pengaduan sampah dari awal dikirim hingga selesai dibersihkan atau ditolak.
 class ComplaintTimeline extends StatelessWidget {
+  /// Objek model laporan pengaduan ([ComplaintModel]) untuk mendeteksi status dan riwayat waktu.
   final ComplaintModel complaint;
 
+  /// Membuat instance baru dari [ComplaintTimeline].
   const ComplaintTimeline({super.key, required this.complaint});
 
   @override
@@ -132,6 +136,7 @@ class ComplaintTimeline extends StatelessWidget {
     );
   }
 
+  /// Membangun tampilan visual satu baris tahap di dalam linimasa penanganan laporan.
   Widget _buildTimelineStep({
     required BuildContext context,
     required String title,
@@ -209,7 +214,7 @@ class ComplaintTimeline extends StatelessWidget {
         ),
         const SizedBox(width: 16),
         
-        // Kolom Kanan: Teks Info Detail Tahap
+        // Kolom Rangan: Teks Info Detail Tahap
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -265,7 +270,11 @@ class ComplaintTimeline extends StatelessWidget {
   }
 }
 
+/// Helper kelas [CloudFirestoreTimestampHelper] menyediakan utilitas 
+/// untuk melakukan konversi instan dari objek [DateTime] ke objek [Timestamp] Firestore.
 class CloudFirestoreTimestampHelper {
+  /// Mengonversi objek [DateTime] menjadi objek [Timestamp] Firestore.
+  /// Mengembalikan `null` jika parameter bernilai null.
   static Timestamp? fromDateTime(DateTime? dateTime) {
     if (dateTime == null) return null;
     return Timestamp.fromDate(dateTime);

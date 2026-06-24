@@ -6,13 +6,19 @@ import '../../core/constants/app_strings.dart';
 import '../../core/constants/app_routes.dart';
 import '../../providers/auth_provider.dart';
 
+/// Layar [SplashScreen] merupakan tampilan pembuka aplikasi GO - SAMPAH.
+/// 
+/// Berfungsi untuk melakukan inisialisasi session user secara asinkron di latar belakang
+/// sebelum mengarahkan pengguna ke halaman login atau halaman utama sesuai perannya.
 class SplashScreen extends StatefulWidget {
+  /// Membuat instance baru dari [SplashScreen].
   const SplashScreen({super.key});
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
+/// State dari [SplashScreen] untuk mengatur delay visual dan pengecekan otentikasi saat startup.
 class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
@@ -20,6 +26,10 @@ class _SplashScreenState extends State<SplashScreen> {
     _checkAuth();
   }
 
+  /// Memeriksa status login pengguna saat ini.
+  /// 
+  /// Menunggu selama 2 detik untuk efek transisi splash, lalu menginisialisasi status user 
+  /// dan mengarahkan navigasi ke rute yang sesuai berdasarkan role pengguna.
   Future<void> _checkAuth() async {
     // Simulasi delay splash screen demi estetika
     await Future.delayed(const Duration(seconds: 2));

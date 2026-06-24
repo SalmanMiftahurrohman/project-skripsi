@@ -4,10 +4,16 @@ import '../core/constants/app_colors.dart';
 import '../providers/feedback_provider.dart';
 import 'custom_text_field.dart';
 
+/// Kotak dialog [FeedbackDialog] menampilkan formulir pengisian umpan balik/ulasan kepuasan 
+/// setelah laporan pengaduan berhasil ditangani dengan status Selesai.
 class FeedbackDialog extends StatefulWidget {
+  /// ID pengaduan yang dinilai ([ComplaintModel.id]).
   final String complaintId;
+
+  /// ID pelapor yang memberikan penilaian.
   final String userId;
 
+  /// Membuat instance baru dari [FeedbackDialog].
   const FeedbackDialog({
     super.key,
     required this.complaintId,
@@ -18,9 +24,16 @@ class FeedbackDialog extends StatefulWidget {
   State<FeedbackDialog> createState() => _FeedbackDialogState();
 }
 
+/// State untuk widget [FeedbackDialog] untuk memantau rating bintang terpilih,
+/// controller text ulasan, dan status pengiriman data.
 class _FeedbackDialogState extends State<FeedbackDialog> {
+  /// Nilai ulasan bintang yang dipilih (skala 1 sampai 5).
   int _rating = 0;
+
+  /// Kontroler input ulasan/komentar text.
   final TextEditingController _commentController = TextEditingController();
+
+  /// Status loading untuk mematikan interaksi tombol saat proses pengiriman ulasan sedang berlangsung.
   bool _isSubmitting = false;
 
   @override
@@ -29,6 +42,8 @@ class _FeedbackDialogState extends State<FeedbackDialog> {
     super.dispose();
   }
 
+  /// Melakukan validasi input rating dan mengirimkan umpan balik ke database
+  /// melalui [FeedbackProvider]. Setelah sukses, dialog akan ditutup dan mengembalikan status `true`.
   Future<void> _submit() async {
     if (_rating == 0) {
       ScaffoldMessenger.of(context).showSnackBar(

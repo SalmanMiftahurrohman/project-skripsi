@@ -14,13 +14,19 @@ import '../../widgets/status_badge.dart';
 import '../../widgets/app_image.dart';
 import 'admin_sidebar.dart';
 
+/// Halaman [AdminComplaintsScreen] merupakan layar manajemen pengaduan di panel admin.
+/// 
+/// Membantu admin menyaring (filter) laporan pengaduan sampah berdasarkan status penanganannya
+/// dan melihat riwayat/detil dari laporan pengaduan tersebut.
 class AdminComplaintsScreen extends StatefulWidget {
+  /// Membuat instance baru dari [AdminComplaintsScreen].
   const AdminComplaintsScreen({super.key});
 
   @override
   State<AdminComplaintsScreen> createState() => _AdminComplaintsScreenState();
 }
 
+/// State untuk [AdminComplaintsScreen] dengan kontrol tab filter status penanganan pengaduan.
 class _AdminComplaintsScreenState extends State<AdminComplaintsScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final List<String> _statuses = ['Semua', 'Pending', 'Diterima', 'Terverifikasi', 'Diproses', 'Selesai', 'Ditolak'];

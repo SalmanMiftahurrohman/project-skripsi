@@ -1,3 +1,5 @@
+rootProject.name = "go_sampah_android"
+
 pluginManagement {
     val flutterSdkPath =
         run {

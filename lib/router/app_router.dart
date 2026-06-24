@@ -30,7 +30,14 @@ import '../screens/admin/admin_users_screen.dart';
 import '../screens/admin/admin_officers_screen.dart';
 import '../screens/admin/admin_config_screen.dart';
 
+/// Kelas [AppRouter] bertanggung jawab untuk mengonfigurasi routing navigasi aplikasi
+/// menggunakan package [GoRouter]. Di sini juga ditangani logika redirect otomatis (middleware)
+/// untuk membatasi akses halaman berdasarkan status login dan peran (role) pengguna.
 class AppRouter {
+  /// Mengonfigurasi dan mengembalikan instansi [GoRouter] untuk mengatur navigasi aplikasi.
+  /// 
+  /// Menangani [initialLocation] ke rute splash, serta menetapkan fungsi [redirect] 
+  /// untuk mengamankan halaman sesuai dengan otentikasi dan role pengguna.
   static GoRouter router(BuildContext context) {
     return GoRouter(
       initialLocation: AppRoutes.splash,
@@ -167,6 +174,7 @@ class AppRouter {
     );
   }
 
+  /// Helper untuk mendapatkan path halaman utama berdasarkan [role] pengguna.
   static String _getHomeRouteForRole(String? role) {
     if (role == 'masyarakat') return AppRoutes.citizenHome;
     if (role == 'petugas') return AppRoutes.officerHome;

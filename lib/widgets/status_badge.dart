@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import '../core/constants/app_colors.dart';
 
+/// Widget [StatusBadge] menampilkan label (badge) berwarna yang melambangkan 
+/// status penanganan dari laporan pengaduan sampah tertentu.
 class StatusBadge extends StatelessWidget {
+  /// String nama status laporan pengaduan (contoh: 'Pending', 'Diterima', 'Selesai', dll).
   final String status;
 
+  /// Membuat instance baru dari [StatusBadge].
   const StatusBadge({super.key, required this.status});
 
   @override

@@ -15,6 +15,7 @@ import 'package:flutter/foundation.dart'
 /// );
 /// ```
 class DefaultFirebaseOptions {
+  /// Mendapatkan konfigurasi [FirebaseOptions] yang sesuai dengan platform target aktif (Android, iOS, atau Web).
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
       return web;

@@ -41,6 +41,7 @@ dependencies:
 
   # Kamera & Galeri
   image_picker: ^1.1.2
+  path_provider: ^2.1.3
 
   # Lokasi GPS & Alamat
   geolocator: ^14.0.2

@@ -5,8 +5,14 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_routes.dart';
 import '../../providers/auth_provider.dart';
 
+/// Widget [AdminSidebar] menampilkan menu navigasi samping (sidebar) khusus di panel kontrol admin.
+/// 
+/// Menyediakan akses cepat ke halaman Dashboard, Laporan, Masyarakat, Petugas, dan Pengaturan.
 class AdminSidebar extends StatelessWidget {
+  /// Rute navigasi aktif saat ini untuk menyorot menu yang sedang dibuka.
   final String currentRoute;
+
+  /// Membuat instance baru dari [AdminSidebar].
   const AdminSidebar({super.key, required this.currentRoute});
 
   @override
@@ -109,6 +115,20 @@ class AdminSidebar extends StatelessWidget {
                         onPressed: () {
                           Navigator.pop(context);
                           authProvider.logout();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Row(
+                                children: [
+                                  Icon(Icons.info_outline, color: Colors.white),
+                                  SizedBox(width: 8),
+                                  Text('Logout berhasil.'),
+                                ],
+                              ),
+                              backgroundColor: Colors.blueGrey,
+                              behavior: SnackBarBehavior.floating,
+                              duration: Duration(seconds: 2),
+                            ),
+                          );
                           context.go(AppRoutes.login);
                         },
                         child: const Text('Keluar', style: TextStyle(color: Colors.red)),

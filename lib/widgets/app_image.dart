@@ -2,14 +2,31 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import '../core/constants/app_colors.dart';
 
+/// Widget [AppImage] bertanggung jawab menampilkan gambar secara efisien dari internet (network) 
+/// maupun dari data string terenkode Base64 (memory).
+/// 
+/// Menyediakan dukungan otomatis untuk state loading progress indicator, decoding base64 secara aman, 
+/// serta fallback image error builder jika URL gambar rusak atau kosong.
 class AppImage extends StatelessWidget {
+  /// Alamat tautan URL gambar atau representasi data URL Base64 (`data:image/...`).
   final String imageUrl;
+
+  /// Ukuran lebar bingkai gambar (lebar container).
   final double? width;
+
+  /// Ukuran tinggi bingkai gambar (tinggi container).
   final double? height;
+
+  /// Mengatur bagaimana ukuran gambar disesuaikan dengan bingkainya ([BoxFit]).
   final BoxFit fit;
+
+  /// Widget placeholder kustom ketika gambar jaringan sedang dimuat.
   final Widget? placeholder;
+
+  /// Widget fallback kustom ketika gambar gagal dimuat atau URL kosong.
   final Widget? errorWidget;
 
+  /// Membuat instance baru dari [AppImage].
   const AppImage({
     super.key,
     required this.imageUrl,

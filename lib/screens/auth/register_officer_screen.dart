@@ -10,13 +10,17 @@ import '../../providers/auth_provider.dart';
 import '../../widgets/custom_text_field.dart';
 import '../../widgets/loading_overlay.dart';
 
+/// Halaman [RegisterOfficerScreen] menyediakan form registrasi pendaftaran akun baru
+/// khusus bagi Petugas lapangan. Pendaftaran memerlukan kode verifikasi khusus petugas.
 class RegisterOfficerScreen extends StatefulWidget {
+  /// Membuat instance baru dari [RegisterOfficerScreen].
   const RegisterOfficerScreen({super.key});
 
   @override
   State<RegisterOfficerScreen> createState() => _RegisterOfficerScreenState();
 }
 
+/// State dari [RegisterOfficerScreen] untuk mengontrol input form pendaftaran petugas dan penyerahan data.
 class _RegisterOfficerScreenState extends State<RegisterOfficerScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
@@ -37,6 +41,10 @@ class _RegisterOfficerScreenState extends State<RegisterOfficerScreen> {
     super.dispose();
   }
 
+  /// Menangani proses pendaftaran akun petugas lapangan.
+  /// 
+  /// Memvalidasi form input, memanggil [AuthProvider.registerOfficer], dan mengarahkan petugas
+  /// ke halaman beranda petugas lapangan setelah pendaftaran diverifikasi dan berhasil.
   Future<void> _handleRegister() async {
     if (!_formKey.currentState!.validate()) return;
 

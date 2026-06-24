@@ -8,13 +8,17 @@ import '../../core/utils/date_formatter.dart';
 import '../../providers/auth_provider.dart';
 import 'admin_sidebar.dart';
 
+/// Halaman [AdminOfficersScreen] digunakan oleh administrator untuk melihat daftar seluruh akun
+/// dengan peran Petugas yang terdaftar dalam database, dilengkapi fitur pencarian berdasarkan nama.
 class AdminOfficersScreen extends StatefulWidget {
+  /// Membuat instance baru dari [AdminOfficersScreen].
   const AdminOfficersScreen({super.key});
 
   @override
   State<AdminOfficersScreen> createState() => _AdminOfficersScreenState();
 }
 
+/// State untuk [AdminOfficersScreen] untuk menangani filter pencarian petugas lapangan.
 class _AdminOfficersScreenState extends State<AdminOfficersScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';

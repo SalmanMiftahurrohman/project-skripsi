@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
 
+/// Kelas [AppTheme] menyediakan konfigurasi tema visual aplikasi GO - SAMPAH,
+/// meliputi [lightTheme] (Tema Terang) dan [darkTheme] (Tema Gelap).
+/// Konfigurasi ini mengatur gaya global untuk warna, kartu, kolom teks, tombol, dan teks.
 class AppTheme {
+  /// Mendapatkan konfigurasi tema terang ([ThemeData]) untuk aplikasi.
+  /// Menetapkan warna latar belakang terang, kartu bergaris tipis, input field dengan border abu-abu,
+  /// dan tombol utama berwarna biru langit.
   static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,
@@ -79,6 +85,9 @@ class AppTheme {
     );
   }
 
+  /// Mendapatkan konfigurasi tema gelap ([ThemeData]) untuk aplikasi.
+  /// Menggunakan latar belakang gelap, kartu dengan kontras rendah, teks abu-abu terang,
+  /// serta elemen input yang disesuaikan untuk kenyamanan mata di kondisi minim cahaya.
   static ThemeData get darkTheme {
     return ThemeData(
       useMaterial3: true,

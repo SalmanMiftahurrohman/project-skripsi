@@ -16,9 +16,16 @@ import '../../widgets/status_badge.dart';
 import '../../widgets/app_image.dart';
 import '../../widgets/map_widget.dart';
 
+/// Halaman [OfficerComplaintDetailScreen] menampilkan informasi detail penanganan laporan pengaduan sampah
+/// dari sudut pandang Petugas lapangan.
+/// 
+/// Menyediakan peta koordinat penumpukan, aksi pembaruan status laporan ('Diterima', 'Terverifikasi', 'Diproses', 'Ditolak'),
+/// pengunggahan bukti pengerjaan untuk menyelesaikan laporan, serta ulasan dari pelapor jika sudah diselesaikan.
 class OfficerComplaintDetailScreen extends StatefulWidget {
+  /// ID dokumen laporan pengaduan sampah yang ditangani.
   final String id;
 
+  /// Membuat instance baru dari [OfficerComplaintDetailScreen].
   const OfficerComplaintDetailScreen({super.key, required this.id});
 
   @override

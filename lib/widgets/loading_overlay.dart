@@ -2,10 +2,16 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../core/constants/app_colors.dart';
 
+/// Widget [LoadingOverlay] digunakan untuk menumpuk overlay loading berlatar belakang blur/buram
+/// di atas widget utama ([child]) saat proses asinkron ([isLoading]) bernilai true.
 class LoadingOverlay extends StatelessWidget {
+  /// Status aktif overlay loading. Jika `true`, layar buram dengan loading indicator akan muncul.
   final bool isLoading;
+
+  /// Widget utama/anak yang diletakkan di bawah overlay loading.
   final Widget child;
 
+  /// Membuat instance baru dari [LoadingOverlay].
   const LoadingOverlay({
     super.key,
     required this.isLoading,

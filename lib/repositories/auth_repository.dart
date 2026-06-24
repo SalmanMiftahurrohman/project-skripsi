@@ -2,17 +2,26 @@ import '../models/user_model.dart';
 import '../services/auth_service.dart';
 import '../services/firestore_service.dart';
 
+/// Repositori [AuthRepository] menangani logika bisnis tingkat tinggi untuk otentikasi pengguna.
+/// Kelas ini menggabungkan penggunaan [AuthService] untuk kredensial Firebase Auth
+/// dan [FirestoreService] untuk sinkronisasi profil pengguna ke Cloud Firestore.
 class AuthRepository {
+  /// Sumber data otentikasi Firebase.
   final AuthService _authService;
+
+  /// Sumber data penyimpanan data pengguna di Firestore.
   final FirestoreService _firestoreService;
 
+  /// Membuat konstruktor [AuthRepository] dengan ketergantungan layanan otentikasi dan basis data.
   AuthRepository(
     this._authService,
     this._firestoreService,
   );
 
-
-  // Login dengan email & password, kemudian ambil data user dari Firestore
+  /// Melakukan login ke aplikasi.
+  /// 
+  /// Menerima parameter [email] dan [password]. Jika proses login sukses di Firebase Auth,
+  /// fungsi ini akan mengambil profil pengguna dari Firestore via [getUserProfile] dan mengembalikannya.
   Future<UserModel?> login(String email, String password) async {
     final cred = await _authService.signInWithEmailAndPassword(email, password);
     if (cred.user != null) {
@@ -21,7 +30,8 @@ class AuthRepository {
     return null;
   }
 
-  // Mengambil profil pengguna dari Firestore
+  /// Mengambil data profil lengkap pengguna ([UserModel]) dari Firestore berdasarkan [uid] pengguna.
+  /// Mengembalikan `null` jika dokumen profil tidak ditemukan.
   Future<UserModel?> getUserProfile(String uid) async {
     final snap = await _firestoreService.getDocument(path: 'users/$uid');
     if (snap.exists && snap.data() != null) {
@@ -30,7 +40,10 @@ class AuthRepository {
     return null;
   }
 
-  // Update profil pengguna (nama, telepon, tanggal lahir, pekerjaan, alamat, foto)
+  /// Memperbarui informasi profil pengguna pada Firestore dan mengembalikan objek [UserModel] baru yang diperbarui.
+  /// 
+  /// Parameter yang dapat diperbarui meliputi [name] (nama), [phoneNumber] (nomor telepon), 
+  /// [birthDate] (tanggal lahir), [occupation] (pekerjaan), dan [address] (alamat).
   Future<UserModel> updateProfile({
     required UserModel currentUser,
     required String name,
@@ -61,8 +74,10 @@ class AuthRepository {
     return updatedUser;
   }
 
-
-  // Registrasi Akun Masyarakat (Citizen)
+  /// Mendaftarkan pengguna baru dengan peran 'masyarakat' (Citizen).
+  /// 
+  /// Melakukan pendaftaran ke Firebase Auth dengan [email] dan [password], lalu membuat dokumen pengguna
+  /// di Firestore berisi [name] dan [phoneNumber] dengan role diset secara otomatis ke `'masyarakat'`.
   Future<UserModel> registerCitizen({
     required String email,
     required String password,
@@ -92,7 +107,11 @@ class AuthRepository {
     return newUser;
   }
 
-  // Registrasi Akun Petugas (Officer) dengan verifikasi kode khusus
+  /// Mendaftarkan pengguna baru dengan peran 'petugas' (Officer) dengan syarat kode khusus petugas.
+  /// 
+  /// Memvalidasi terlebih dahulu apakah [officerCode] yang dimasukkan cocok dengan kode sistem yang tersimpan 
+  /// di Firestore (`config/officer_code`). Jika cocok, akun dibuat di Firebase Auth dan data profil
+  /// disimpan ke Firestore dengan role diset ke `'petugas'`. Melemparkan [Exception] jika kode verifikasi salah atau tidak ditemukan.
   Future<UserModel> registerOfficer({
     required String email,
     required String password,
@@ -137,17 +156,19 @@ class AuthRepository {
     return newUser;
   }
 
-  // Sign out
+  /// Mengeluarkan pengguna (logout) dari sesi aplikasi saat ini.
   Future<void> logout() async {
     await _authService.signOut();
   }
 
-  // Reset Password
+  /// Mengirim instruksi tautan pemulihan kata sandi ke [email] pengguna.
   Future<void> resetPassword(String email) async {
     await _authService.sendPasswordResetEmail(email);
   }
 
-  // Mengambil stream semua pengguna dari Firestore
+  /// Mendapatkan data perubahan daftar semua pengguna terdaftar secara real-time.
+  /// 
+  /// Mengembalikan [Stream] berisi daftar [UserModel] yang diurutkan berdasarkan tanggal pendaftaran terbaru.
   Stream<List<UserModel>> getUsersStream() {
     return _firestoreService.collectionStream(
       path: 'users',

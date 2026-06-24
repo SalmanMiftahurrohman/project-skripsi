@@ -6,13 +6,17 @@ import '../../providers/config_provider.dart';
 import '../../widgets/custom_text_field.dart';
 import 'admin_sidebar.dart';
 
+/// Halaman [AdminConfigScreen] digunakan oleh administrator untuk mengatur konfigurasi aplikasi secara global,
+/// salah satunya adalah mengubah/memperbarui kode verifikasi rahasia untuk registrasi petugas baru.
 class AdminConfigScreen extends StatefulWidget {
+  /// Membuat instance baru dari [AdminConfigScreen].
   const AdminConfigScreen({super.key});
 
   @override
   State<AdminConfigScreen> createState() => _AdminConfigScreenState();
 }
 
+/// State untuk [AdminConfigScreen] untuk menangani pemuatan dan penyimpanan form kode verifikasi petugas.
 class _AdminConfigScreenState extends State<AdminConfigScreen> {
   final TextEditingController _codeController = TextEditingController();
   final _formKey = GlobalKey<FormState>();

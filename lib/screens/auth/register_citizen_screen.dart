@@ -10,13 +10,17 @@ import '../../providers/auth_provider.dart';
 import '../../widgets/custom_text_field.dart';
 import '../../widgets/loading_overlay.dart';
 
+/// Halaman [RegisterCitizenScreen] menyediakan form registrasi pendaftaran akun baru
+/// khusus bagi masyarakat (Citizen) agar dapat mengirimkan laporan pengaduan sampah.
 class RegisterCitizenScreen extends StatefulWidget {
+  /// Membuat instance baru dari [RegisterCitizenScreen].
   const RegisterCitizenScreen({super.key});
 
   @override
   State<RegisterCitizenScreen> createState() => _RegisterCitizenScreenState();
 }
 
+/// State dari [RegisterCitizenScreen] untuk mengontrol input form pendaftaran masyarakat dan penyerahan data.
 class _RegisterCitizenScreenState extends State<RegisterCitizenScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
@@ -35,6 +39,10 @@ class _RegisterCitizenScreenState extends State<RegisterCitizenScreen> {
     super.dispose();
   }
 
+  /// Menangani proses registrasi akun masyarakat.
+  /// 
+  /// Memvalidasi form input, memanggil [AuthProvider.registerCitizen], dan mengarahkan pengguna
+  /// ke halaman beranda masyarakat setelah pendaftaran berhasil.
   Future<void> _handleRegister() async {
     if (!_formKey.currentState!.validate()) return;
 

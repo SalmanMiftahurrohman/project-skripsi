@@ -8,13 +8,19 @@ import '../../providers/auth_provider.dart';
 import '../../providers/complaint_provider.dart';
 import 'admin_sidebar.dart';
 
+/// Halaman [AdminDashboardScreen] merupakan dashboard panel kontrol bagi administrator (Admin).
+/// 
+/// Menyediakan ringkasan total statistik laporan (laporan masuk, selesai, ditolak) 
+/// serta jumlah pengguna aktif dalam sistem secara real-time.
 class AdminDashboardScreen extends StatefulWidget {
+  /// Membuat instance baru dari [AdminDashboardScreen].
   const AdminDashboardScreen({super.key});
 
   @override
   State<AdminDashboardScreen> createState() => _AdminDashboardScreenState();
 }
 
+/// State untuk [AdminDashboardScreen] untuk mendengarkan perubahan data pengaduan dan user.
 class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   @override
   void initState() {

@@ -6,13 +6,19 @@ import '../../providers/complaint_provider.dart';
 import '../../widgets/complaint_card.dart';
 import '../masyarakat/profile_screen.dart';
 
+/// Halaman [OfficerHomeScreen] merupakan halaman utama (home) bagi pengguna Petugas (Officer).
+/// 
+/// Menyediakan navigasi bawah (bottom navigation bar) untuk beralih antara melihat daftar seluruh pengaduan sampah
+/// yang masuk ke sistem, serta halaman Profil diri petugas.
 class OfficerHomeScreen extends StatefulWidget {
+  /// Membuat instance baru dari [OfficerHomeScreen].
   const OfficerHomeScreen({super.key});
 
   @override
   State<OfficerHomeScreen> createState() => _OfficerHomeScreenState();
 }
 
+/// State untuk [OfficerHomeScreen] yang memantau indeks navigasi bawah dan pengunduhan daftar seluruh pengaduan.
 class _OfficerHomeScreenState extends State<OfficerHomeScreen> {
   int _currentIndex = 0;
 

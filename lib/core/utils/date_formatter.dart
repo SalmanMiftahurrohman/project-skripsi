@@ -1,7 +1,14 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 
+/// Kelas [DateFormatter] menyediakan utilitas untuk memformat objek [Timestamp] 
+/// dari Firestore menjadi representasi teks tanggal dan waktu yang mudah dibaca oleh pengguna.
 class DateFormatter {
+  /// Memformat [Timestamp] menjadi format tanggal dan waktu lengkap berbahasa Indonesia.
+  /// 
+  /// Format output: `dd MMMM yyyy, HH:mm` (Contoh: `24 Juni 2026, 22:30`).
+  /// Jika terjadi kegagalan/locale 'id_ID' belum diinisialisasi, akan menggunakan format fallback `dd/MM/yyyy HH:mm`.
+  /// Mengembalikan `-` jika nilai [timestamp] bernilai null.
   static String formatTimestamp(Timestamp? timestamp) {
     if (timestamp == null) return '-';
     
@@ -16,6 +23,11 @@ class DateFormatter {
     }
   }
 
+  /// Memformat [Timestamp] menjadi format tanggal pendek berbahasa Indonesia tanpa informasi waktu.
+  /// 
+  /// Format output: `dd MMM yyyy` (Contoh: `24 Jun 2026`).
+  /// Jika terjadi kegagalan/locale 'id_ID' belum diinisialisasi, akan menggunakan format fallback `dd/MM/yyyy`.
+  /// Mengembalikan `-` jika nilai [timestamp] bernilai null.
   static String formatShortDate(Timestamp? timestamp) {
     if (timestamp == null) return '-';
     

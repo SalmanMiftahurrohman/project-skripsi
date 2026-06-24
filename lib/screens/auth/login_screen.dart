@@ -10,13 +10,17 @@ import '../../providers/auth_provider.dart';
 import '../../widgets/custom_text_field.dart';
 import '../../widgets/loading_overlay.dart';
 
+/// Halaman [LoginScreen] menyediakan antarmuka pengguna bagi semua role (Masyarakat, Petugas, Admin)
+/// untuk melakukan otentikasi masuk ke aplikasi menggunakan email dan kata sandi.
 class LoginScreen extends StatefulWidget {
+  /// Membuat instance baru dari [LoginScreen].
   const LoginScreen({super.key});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
+/// State dari [LoginScreen] untuk mengatur controller input form dan logika penyerahan otentikasi.
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
@@ -29,6 +33,10 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  /// Menangani proses submit login ketika tombol masuk ditekan.
+  /// 
+  /// Memvalidasi form input, memanggil [AuthProvider.login], menampilkan snackbar penanda sukses/gagal,
+  /// dan mengarahkan navigasi ke dashboard yang sesuai berdasarkan role pengguna.
   Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -41,6 +49,20 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!mounted) return;
 
     if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Row(
+            children: [
+              Icon(Icons.check_circle, color: Colors.white),
+              SizedBox(width: 8),
+              Text('Login berhasil! Selamat datang kembali.'),
+            ],
+          ),
+          backgroundColor: Colors.green,
+          behavior: SnackBarBehavior.floating,
+          duration: Duration(seconds: 2),
+        ),
+      );
       // Navigasi setelah login sukses akan otomatis dilakukan oleh redirect di GoRouter
       final role = authProvider.userRole;
       if (role == 'masyarakat') {

@@ -1,5 +1,8 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/constants/app_colors.dart';
@@ -9,16 +12,26 @@ import '../../models/user_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/loading_overlay.dart';
 
+/// Halaman [ProfileScreen] digunakan oleh pengguna untuk melihat dan mengedit data profil mereka.
+/// 
+/// Memungkinkan pembaruan data dasar (nama, nomor telepon, tanggal lahir, pekerjaan, alamat)
+/// serta perubahan foto profil secara asinkron.
 class ProfileScreen extends StatefulWidget {
+  /// Menandakan apakah halaman profil ini ditampilkan sebagai tab di dalam menu navigasi utama.
   final bool isTab;
+
+  /// Membuat instance baru dari [ProfileScreen].
   const ProfileScreen({super.key, this.isTab = false});
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
 }
 
+/// State untuk [ProfileScreen] yang mengelola control form edit profil dan pemilihan file gambar lokal.
 class _ProfileScreenState extends State<ProfileScreen> {
   bool _isEditing = false;
+  File? _localImageFile;
+  XFile? _pickedImageFile;
 
   late TextEditingController _nameController;
   late TextEditingController _phoneController;
@@ -36,6 +49,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _birthDateController = TextEditingController();
     _occupationController = TextEditingController();
     _addressController = TextEditingController();
+    _loadLocalImage();
   }
 
   @override
@@ -46,6 +60,72 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _occupationController.dispose();
     _addressController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadLocalImage() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final userModel = authProvider.userModel;
+    if (userModel == null) return;
+
+    try {
+      final directory = await getApplicationDocumentsDirectory();
+      final file = File('${directory.path}/profile_${userModel.uid}.png');
+      if (await file.exists()) {
+        setState(() {
+          _localImageFile = file;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading local image: $e');
+    }
+  }
+
+  Future<void> _pickImage() async {
+    final ImagePicker picker = ImagePicker();
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_library_rounded, color: AppColors.primary),
+              title: const Text('Pilih dari Galeri'),
+              onTap: () => Navigator.pop(context, ImageSource.gallery),
+            ),
+            ListTile(
+              leading: const Icon(Icons.camera_alt_rounded, color: AppColors.primary),
+              title: const Text('Ambil dari Kamera'),
+              onTap: () => Navigator.pop(context, ImageSource.camera),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (source == null) return;
+
+    try {
+      final XFile? pickedFile = await picker.pickImage(
+        source: source,
+        maxWidth: 512,
+        maxHeight: 512,
+        imageQuality: 85,
+      );
+
+      if (pickedFile != null) {
+        setState(() {
+          _pickedImageFile = pickedFile;
+        });
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal memilih gambar: $e'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+    }
   }
 
   void _startEditing(UserModel? userModel) {
@@ -59,13 +139,44 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _cancelEditing() {
-    setState(() => _isEditing = false);
+    setState(() {
+      _isEditing = false;
+      _pickedImageFile = null;
+    });
   }
 
   Future<void> _saveProfile() async {
     if (!_formKey.currentState!.validate()) return;
 
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final userModel = authProvider.userModel;
+    if (userModel == null) return;
+
+    if (_pickedImageFile != null) {
+      try {
+        final directory = await getApplicationDocumentsDirectory();
+        final String targetPath = '${directory.path}/profile_${userModel.uid}.png';
+        final File localFile = File(targetPath);
+        
+        final savedFile = await File(_pickedImageFile!.path).copy(localFile.path);
+        
+        setState(() {
+          _localImageFile = savedFile;
+          _pickedImageFile = null;
+        });
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Gagal menyimpan foto profil: $e'),
+              backgroundColor: Colors.redAccent,
+            ),
+          );
+        }
+        return;
+      }
+    }
+
     final success = await authProvider.updateProfile(
       name: _nameController.text.trim(),
       phoneNumber: _phoneController.text.trim(),
@@ -119,6 +230,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (confirm == true) {
       await authProvider.logout();
       if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.info_outline, color: Colors.white),
+                SizedBox(width: 8),
+                Text('Logout berhasil.'),
+              ],
+            ),
+            backgroundColor: Colors.blueGrey,
+            behavior: SnackBarBehavior.floating,
+            duration: Duration(seconds: 2),
+          ),
+        );
         context.go(AppRoutes.login);
       }
     }
@@ -145,30 +270,75 @@ class _ProfileScreenState extends State<ProfileScreen> {
               children: [
                 const SizedBox(height: 8),
 
-                // === Avatar (inisial nama, tanpa upload foto) ===
-                Container(
-                  width: 110,
-                  height: 110,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: AppColors.primaryGradient,
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.primary.withValues(alpha: 0.3),
-                        blurRadius: 16,
-                        offset: const Offset(0, 8),
+                // === Avatar dengan Dukungan Upload Foto Lokal ===
+                GestureDetector(
+                  onTap: _isEditing ? _pickImage : null,
+                  child: Stack(
+                    children: [
+                      Container(
+                        width: 110,
+                        height: 110,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: _pickedImageFile != null || _localImageFile != null
+                              ? null
+                              : AppColors.primaryGradient,
+                          color: _pickedImageFile != null || _localImageFile != null
+                              ? Colors.grey[200]
+                              : null,
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.primary.withValues(alpha: 0.3),
+                              blurRadius: 16,
+                              offset: const Offset(0, 8),
+                            ),
+                          ],
+                        ),
+                        child: ClipOval(
+                          child: _pickedImageFile != null
+                              ? Image.file(
+                                  File(_pickedImageFile!.path),
+                                  width: 110,
+                                  height: 110,
+                                  fit: BoxFit.cover,
+                                )
+                              : (_localImageFile != null
+                                  ? Image.file(
+                                      _localImageFile!,
+                                      width: 110,
+                                      height: 110,
+                                      fit: BoxFit.cover,
+                                    )
+                                  : Center(
+                                      child: Text(
+                                        initial,
+                                        style: const TextStyle(
+                                          fontSize: 44,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    )),
+                        ),
                       ),
+                      if (_isEditing)
+                        Positioned(
+                          bottom: 0,
+                          right: 0,
+                          child: Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: const BoxDecoration(
+                              color: AppColors.primary,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.camera_alt_rounded,
+                              size: 18,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
                     ],
-                  ),
-                  child: Center(
-                    child: Text(
-                      initial,
-                      style: const TextStyle(
-                        fontSize: 44,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
                   ),
                 ),
                 const SizedBox(height: 16),

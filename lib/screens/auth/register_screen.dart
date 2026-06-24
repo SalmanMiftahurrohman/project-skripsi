@@ -4,7 +4,12 @@ import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_routes.dart';
 
+/// Halaman [RegisterScreen] berfungsi sebagai layar perantara pemilihan tipe akun (role).
+/// 
+/// Memungkinkan calon pendaftar memilih mendaftar sebagai 'Masyarakat' (Citizen) 
+/// atau 'Petugas Kebersihan' (Officer).
 class RegisterScreen extends StatelessWidget {
+  /// Membuat instance baru dari [RegisterScreen].
   const RegisterScreen({super.key});
 
   @override
@@ -77,6 +82,10 @@ class RegisterScreen extends StatelessWidget {
     );
   }
 
+  /// Membangun pilihan kartu (choice card) untuk membagi pendaftaran role.
+  /// 
+  /// Menerima parameter [title] (nama role), [description] (penjelasan hak akses), 
+  /// [icon] pendukung, dan callback [onTap] untuk navigasi.
   Widget _buildChoiceCard({
     required BuildContext context,
     required String title,

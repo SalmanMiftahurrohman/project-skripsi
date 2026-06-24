@@ -7,11 +7,20 @@ import '../core/utils/date_formatter.dart';
 import '../models/complaint_model.dart';
 import 'app_image.dart';
 
+/// Widget [ComplaintCard] menampilkan ringkasan informasi laporan pengaduan sampah
+/// dalam bentuk kartu interaktif (card) yang dapat diklik.
 class ComplaintCard extends StatelessWidget {
+  /// Objek data model pengaduan sampah ([ComplaintModel]) yang ditampilkan pada kartu.
   final ComplaintModel complaint;
+
+  /// Menandakan apakah tampilan kartu ini dikonsumsi oleh role Petugas.
+  /// Memengaruhi navigasi detail ketika kartu diklik.
   final bool isOfficer;
+
+  /// Aksi callback opsional ketika kartu diketuk (jika tidak null, menimpa aksi navigasi default).
   final VoidCallback? onTap;
 
+  /// Membuat instance baru dari [ComplaintCard].
   const ComplaintCard({
     super.key,
     required this.complaint,
@@ -19,6 +28,7 @@ class ComplaintCard extends StatelessWidget {
     this.onTap,
   });
 
+  /// Mendapatkan warna representasi status visual berdasarkan status laporan [status].
   Color _getStatusColor(String status) {
     switch (status.trim().toLowerCase()) {
       case 'pending':

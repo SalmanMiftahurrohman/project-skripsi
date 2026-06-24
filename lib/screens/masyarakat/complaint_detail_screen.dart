@@ -15,9 +15,16 @@ import '../../widgets/feedback_dialog.dart';
 import '../../widgets/app_image.dart';
 import '../../widgets/map_widget.dart';
 
+/// Halaman [ComplaintDetailScreen] menampilkan informasi detail penanganan suatu laporan pengaduan sampah
+/// dari sudut pandang pelapor (Masyarakat).
+/// 
+/// Menyediakan peta koordinat sampah, foto laporan awal, linimasa status penanganan,
+/// foto bukti penanganan selesai dari petugas, serta dialog pengisian umpan balik/ulasan kepuasan.
 class ComplaintDetailScreen extends StatefulWidget {
+  /// ID unik laporan pengaduan yang ingin ditampilkan detailnya.
   final String id;
 
+  /// Membuat instance baru dari [ComplaintDetailScreen].
   const ComplaintDetailScreen({super.key, required this.id});
 
   @override

@@ -3,13 +3,26 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../core/constants/app_colors.dart';
 
+/// Widget [MapWidget] menampilkan peta interaktif menggunakan OpenStreetMap (OSM) dan [FlutterMap].
+/// 
+/// Digunakan untuk memilih lokasi penumpukan sampah (bagi masyarakat) atau melihat lokasi pengaduan (bagi petugas/admin).
 class MapWidget extends StatefulWidget {
+  /// Titik koordinat awal garis lintang (latitude) yang akan disorot peta.
   final double? initialLatitude;
+
+  /// Titik koordinat awal garis bujur (longitude) yang akan disorot peta.
   final double? initialLongitude;
+
+  /// Menentukan apakah peta hanya dapat dilihat saja (read-only) atau koordinatnya dapat digeser/dipilih.
   final bool isReadOnly;
+
+  /// Callback event saat pengguna mengubah/mengetuk lokasi baru di peta (mengembalikan latitude & longitude baru).
   final Function(double lat, double lng)? onLocationChanged;
+
+  /// Menentukan apakah batas wilayah administratif (geofence) Kecamatan Kadungora (7.5 km) perlu ditampilkan berupa lingkaran overlay.
   final bool showGeofence;
 
+  /// Membuat instance baru dari [MapWidget].
   const MapWidget({
     super.key,
     this.initialLatitude,
@@ -24,11 +37,16 @@ class MapWidget extends StatefulWidget {
 }
 
 class _MapWidgetState extends State<MapWidget> {
+  /// Kontroler peta untuk mengatur pergerakan kamera zoom dan center lokasi.
   late final MapController _mapController;
+
+  /// Menyimpan titik koordinat yang dipilih/diberi marker oleh pengguna.
   LatLng? _selectedLocation;
 
-  // Pusat Kecamatan Kadungora, Garut
+  /// Garis lintang (latitude) pusat administratif Kecamatan Kadungora, Garut.
   static const double _kadungoraLat = -7.0880;
+
+  /// Garis bujur (longitude) pusat administratif Kecamatan Kadungora, Garut.
   static const double _kadungoraLng = 107.8620;
 
   @override

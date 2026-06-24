@@ -8,13 +8,17 @@ import '../../core/utils/date_formatter.dart';
 import '../../providers/auth_provider.dart';
 import 'admin_sidebar.dart';
 
+/// Halaman [AdminUsersScreen] menampilkan daftar seluruh pengguna terdaftar 
+/// dengan peran Masyarakat (Citizen) beserta informasi profil dasar dan fitur pencarian nama.
 class AdminUsersScreen extends StatefulWidget {
+  /// Membuat instance baru dari [AdminUsersScreen].
   const AdminUsersScreen({super.key});
 
   @override
   State<AdminUsersScreen> createState() => _AdminUsersScreenState();
 }
 
+/// State untuk [AdminUsersScreen] untuk memantau pencarian daftar masyarakat terdaftar.
 class _AdminUsersScreenState extends State<AdminUsersScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';

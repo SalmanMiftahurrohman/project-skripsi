@@ -3,13 +3,16 @@ import 'dart:io';
 import '../models/complaint_model.dart';
 import '../services/firestore_service.dart';
 
+/// Repositori [ComplaintRepository] mengelola logika penyimpanan, pembaruan, dan pengambilan data 
+/// pengaduan sampah ([ComplaintModel]) dari database Firestore serta penanganan gambar dalam base64.
 class ComplaintRepository {
+  /// Sumber data penyimpanan Cloud Firestore.
   final FirestoreService _firestoreService;
 
+  /// Membuat konstruktor [ComplaintRepository] dengan ketergantungan pada [FirestoreService].
   ComplaintRepository(this._firestoreService);
 
-
-  // Membuat pengaduan baru di Firestore
+  /// Membuat dokumen pengaduan baru di Firestore.
   Future<void> createComplaint(ComplaintModel complaint) async {
     await _firestoreService.setData(
       path: 'complaints/${complaint.id}',
@@ -17,7 +20,11 @@ class ComplaintRepository {
     );
   }
 
-  // Mengunggah foto pengaduan ke Firebase Storage (Bypass ke Base64 data URL untuk menghindari limitasi Storage)
+  /// Mengonversi file foto laporan lokal menjadi data URL berbasis Base64.
+  /// 
+  /// Menerima parameter [file] foto laporan dan [userId] pelapor.
+  /// Pengubahan ke Base64 ini dirancang untuk mem-bypass keterbatasan Firebase Storage default/gratisan.
+  /// Mengembalikan string data URL Base64, atau URL gambar placeholder default jika terjadi error.
   Future<String> uploadComplaintImage(File file, String userId) async {
     try {
       final bytes = await file.readAsBytes();
@@ -29,7 +36,10 @@ class ComplaintRepository {
     }
   }
 
-  // Mengunggah foto bukti bersih-bersih ke Firebase Storage (Bypass ke Base64 data URL untuk menghindari limitasi Storage)
+  /// Mengonversi file bukti pengerjaan petugas lapangan menjadi data URL berbasis Base64.
+  /// 
+  /// Menerima parameter [file] bukti foto dan [complaintId] pengaduan terkait.
+  /// Mengembalikan string data URL Base64, atau URL gambar placeholder default jika terjadi error.
   Future<String> uploadEvidenceImage(File file, String complaintId) async {
     try {
       final bytes = await file.readAsBytes();
@@ -41,7 +51,7 @@ class ComplaintRepository {
     }
   }
 
-  // Memperbarui bidang-bidang tertentu pada dokumen pengaduan
+  /// Memperbarui sebagian kolom (fields) data pengaduan pada dokumen Firestore berdasarkan [id].
   Future<void> updateComplaintFields(String id, Map<String, dynamic> updates) async {
     await _firestoreService.setData(
       path: 'complaints/$id',
@@ -50,7 +60,9 @@ class ComplaintRepository {
     );
   }
 
-  // Mendapatkan stream pengaduan dari user tertentu (Masyarakat)
+  /// Mendapatkan real-time [Stream] daftar pengaduan milik pengguna tertentu ([userId]).
+  /// 
+  /// Hasil daftar diurutkan berdasarkan waktu pembuatan terbaru ([ComplaintModel.createdAt]).
   Stream<List<ComplaintModel>> getComplaintsStream(String userId) {
     return _firestoreService.collectionStream(
       path: 'complaints',
@@ -64,7 +76,9 @@ class ComplaintRepository {
     });
   }
 
-  // Mendapatkan stream seluruh pengaduan di sistem (untuk Petugas & Admin)
+  /// Mendapatkan real-time [Stream] berisi seluruh daftar pengaduan yang ada di dalam sistem (untuk Petugas & Admin).
+  /// 
+  /// Hasil daftar diurutkan berdasarkan waktu pembuatan terbaru ([ComplaintModel.createdAt]).
   Stream<List<ComplaintModel>> getAllComplaintsStream() {
     return _firestoreService.collectionStream(
       path: 'complaints',
@@ -76,7 +90,8 @@ class ComplaintRepository {
     });
   }
 
-  // Mengambil satu dokumen pengaduan berdasarkan ID
+  /// Mengambil data dokumen pengaduan tunggal secara asinkron berdasarkan [id].
+  /// Mengembalikan objek [ComplaintModel] atau `null` jika dokumen tidak ditemukan.
   Future<ComplaintModel?> getComplaintById(String id) async {
     final snap = await _firestoreService.getDocument(path: 'complaints/$id');
     if (snap.exists && snap.data() != null) {

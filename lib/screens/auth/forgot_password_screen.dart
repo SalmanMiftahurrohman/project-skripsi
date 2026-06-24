@@ -10,13 +10,18 @@ import '../../providers/auth_provider.dart';
 import '../../widgets/custom_text_field.dart';
 import '../../widgets/loading_overlay.dart';
 
+/// Halaman [ForgotPasswordScreen] digunakan oleh pengguna untuk memulihkan kata sandi.
+/// 
+/// Menyediakan input email untuk mengirimkan link pemulihan kata sandi melalui Firebase Auth.
 class ForgotPasswordScreen extends StatefulWidget {
+  /// Membuat instance baru dari [ForgotPasswordScreen].
   const ForgotPasswordScreen({super.key});
 
   @override
   State<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
 }
 
+/// State untuk [ForgotPasswordScreen] untuk memantau status validasi form dan input email.
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
@@ -27,6 +32,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     super.dispose();
   }
 
+  /// Mengirimkan permintaan reset password menggunakan alamat email yang dimasukkan pengguna.
+  /// 
+  /// Setelah berhasil, pengguna akan diarahkan kembali ke halaman login.
   Future<void> _handleReset() async {
     if (!_formKey.currentState!.validate()) return;
 

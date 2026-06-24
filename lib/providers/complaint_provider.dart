@@ -6,22 +6,38 @@ import '../models/complaint_model.dart';
 import '../repositories/complaint_repository.dart';
 import '../services/firestore_service.dart';
 
+/// Penyedia state [ComplaintProvider] mengelola status dan aliran data pengaduan sampah.
+/// 
+/// Ini memfasilitasi pembuatan, pembaruan status, penyelesaian pengaduan,
+/// dan pengamatan aliran data real-time baik untuk peran Masyarakat maupun Petugas/Admin.
 class ComplaintProvider extends ChangeNotifier {
+  /// Instansiasi [ComplaintRepository] sebagai sumber penanganan data pengaduan.
   final ComplaintRepository _complaintRepository = ComplaintRepository(
     FirestoreService(),
   );
 
+  /// Daftar lokal laporan pengaduan sampah yang sedang dimuat.
   List<ComplaintModel> _complaints = [];
+
+  /// Menunjukkan status pemuatan data pengaduan.
   bool _isLoading = false;
+
+  /// Menyimpan pesan kesalahan/error jika ada proses pengambilan atau modifikasi data yang gagal.
   String? _errorMessage;
+
+  /// Langganan (subscription) aliran data real-time pengaduan dari Firestore.
   StreamSubscription<List<ComplaintModel>>? _complaintsSubscription;
 
-  // Getters
+  /// Mendapatkan daftar pengaduan sampah.
   List<ComplaintModel> get complaints => _complaints;
+
+  /// Mendapatkan status loading.
   bool get isLoading => _isLoading;
+
+  /// Mendapatkan pesan error/kesalahan terakhir.
   String? get errorMessage => _errorMessage;
 
-  // Mendengarkan daftar pengaduan secara real-time berdasarkan userId (versi Masyarakat)
+  /// Mendengarkan daftar pengaduan secara real-time berdasarkan [userId] pengirim (untuk versi Masyarakat).
   void listenToUserComplaints(String userId) {
     _isLoading = true;
     _errorMessage = null;
@@ -41,7 +57,7 @@ class ComplaintProvider extends ChangeNotifier {
     );
   }
 
-  // Mendengarkan seluruh daftar pengaduan secara real-time (versi Petugas & Admin)
+  /// Mendengarkan seluruh daftar pengaduan secara real-time dari database (untuk versi Petugas & Admin).
   void listenToAllComplaints() {
     _isLoading = true;
     _errorMessage = null;
@@ -61,7 +77,11 @@ class ComplaintProvider extends ChangeNotifier {
     );
   }
 
-  // Membuat pengaduan baru
+  /// Membuat pengaduan laporan penumpukan sampah baru.
+  /// 
+  /// Alur proses: mengunggah [imageFile] foto ke penyimpanan base64 data URL,
+  /// menghasilkan ID unik laporan, membuat [ComplaintModel], lalu menyimpannya ke Firestore.
+  /// Mengembalikan `true` jika berhasil.
   Future<bool> createComplaint({
     required String userId,
     required String title,
@@ -112,7 +132,11 @@ class ComplaintProvider extends ChangeNotifier {
     }
   }
 
-  // Memperbarui status pengaduan (Diterima, Terverifikasi, Diproses, Ditolak)
+  /// Memperbarui status penanganan laporan pengaduan sampah ([newStatus]).
+  /// 
+  /// Mendukung pencatatan waktu diproses ([processedAt]) jika status berubah menjadi 'Diproses',
+  /// serta pencatatan alasan penolakan ([rejectionReason]) jika status berubah menjadi 'Ditolak'.
+  /// Mengembalikan `true` jika berhasil.
   Future<bool> updateStatus(String complaintId, String newStatus, {String? rejectionReason}) async {
     _isLoading = true;
     _errorMessage = null;
@@ -145,7 +169,10 @@ class ComplaintProvider extends ChangeNotifier {
     }
   }
 
-  // Menyelesaikan laporan pengaduan dengan mengunggah foto bukti pengerjaan
+  /// Menyelesaikan laporan pengaduan sampah dengan status 'Selesai' dan melampirkan foto bukti pengerjaan ([evidenceFile]).
+  /// 
+  /// Mengonversi foto bukti menjadi Base64, mengubah status laporan, dan menyimpan data ke Firestore.
+  /// Mengembalikan `true` jika berhasil.
   Future<bool> resolveComplaint(String complaintId, File evidenceFile) async {
     _isLoading = true;
     _errorMessage = null;
@@ -175,11 +202,14 @@ class ComplaintProvider extends ChangeNotifier {
     }
   }
 
-  // Mengambil info satu laporan pengaduan (mencari di memori lokal, jika tidak ada fetch Firestore)
+  /// Mencari laporan pengaduan berdasarkan [id] laporan.
+  /// 
+  /// Mengecek terlebih dahulu di daftar lokal memori [_complaints]. Jika tidak ditemukan,
+  /// fungsi ini akan mengambil dokumen langsung dari Firestore.
   Future<ComplaintModel?> fetchComplaintById(String id) async {
     _isLoading = true;
     _errorMessage = null;
-    notifyListeners();
+    Future.microtask(() => notifyListeners());
 
     try {
       // 1. Cek di memori lokal
@@ -205,6 +235,7 @@ class ComplaintProvider extends ChangeNotifier {
     }
   }
 
+  /// Membersihkan pesan error/kesalahan saat ini.
   void clearError() {
     _errorMessage = null;
     notifyListeners();

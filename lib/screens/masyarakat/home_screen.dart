@@ -9,13 +9,19 @@ import '../../providers/complaint_provider.dart';
 import '../../widgets/complaint_card.dart';
 import 'profile_screen.dart';
 
+/// Halaman [HomeScreen] merupakan halaman utama (home) bagi pengguna Masyarakat (Citizen).
+/// 
+/// Menyediakan navigasi bawah (bottom navigation bar) untuk beralih antara melihat daftar riwayat laporan
+/// pengaduan sampah yang dikirim sendiri oleh pengguna, serta halaman Profil diri.
 class HomeScreen extends StatefulWidget {
+  /// Membuat instance baru dari [HomeScreen].
   const HomeScreen({super.key});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
+/// State untuk [HomeScreen] yang mengatur indeks navigasi bawah dan pengunduhan riwayat laporan sampah milik pengguna.
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
 

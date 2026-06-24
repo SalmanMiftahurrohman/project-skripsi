@@ -15,13 +15,19 @@ import '../../widgets/custom_text_field.dart';
 import '../../widgets/loading_overlay.dart';
 import '../../widgets/map_widget.dart';
 
+/// Halaman [CreateComplaintScreen] menyediakan antarmuka bagi masyarakat untuk membuat laporan pengaduan sampah baru.
+/// 
+/// Fitur utama meliputi pengunggahan foto sampah (kamera/galeri), penentuan lokasi gps otomatis atau pin manual 
+/// pada peta [MapWidget], validasi cakupan geofencing Kecamatan Kadungora, serta form deskripsi laporan.
 class CreateComplaintScreen extends StatefulWidget {
+  /// Membuat instance baru dari [CreateComplaintScreen].
   const CreateComplaintScreen({super.key});
 
   @override
   State<CreateComplaintScreen> createState() => _CreateComplaintScreenState();
 }
 
+/// State untuk [CreateComplaintScreen] yang memantau validasi formulir laporan baru, gambar sampah, dan koordinat peta.
 class _CreateComplaintScreenState extends State<CreateComplaintScreen> {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
