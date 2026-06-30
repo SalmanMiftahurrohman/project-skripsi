@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_routes.dart';
+import '../../models/complaint_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/complaint_provider.dart';
 import '../../widgets/complaint_card.dart';
@@ -60,6 +61,30 @@ class _HomeScreenState extends State<HomeScreen> {
       return false;
     }).toList();
 
+    // Petakan laporan pembuatan offline baru agar bisa ditampilkan di riwayat (tab 0)
+    final List<ComplaintModel> mappedPendingComplaints = _currentIndex == 0
+        ? complaintProvider.pendingComplaints.map((item) {
+            return ComplaintModel(
+              id: item.id,
+              userId: item.userId,
+              title: item.title,
+              description: item.description,
+              imageUrl: item.localImagePath,
+              latitude: item.latitude,
+              longitude: item.longitude,
+              address: item.address,
+              category: item.category,
+              status: 'Menunggu Sinkronisasi',
+              createdAt: item.createdAt,
+            );
+          }).toList()
+        : [];
+
+    final List<ComplaintModel> allComplaintsToShow = [
+      ...mappedPendingComplaints,
+      ...filteredComplaints,
+    ];
+
     // Judul AppBar dinamis
     final String appBarTitle = _currentIndex == 0
         ? 'Riwayat Pengaduan'
@@ -68,6 +93,8 @@ class _HomeScreenState extends State<HomeScreen> {
             : _currentIndex == 2
                 ? 'Pengaduan Selesai'
                 : 'Profil Saya';
+
+    final pendingComplaints = complaintProvider.pendingComplaints;
 
     return Scaffold(
       appBar: AppBar(
@@ -86,6 +113,54 @@ class _HomeScreenState extends State<HomeScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     const SizedBox(height: 16),
+                    if (pendingComplaints.isNotEmpty) ...[
+                      Container(
+                        margin: const EdgeInsets.only(bottom: 16),
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.orange.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.sync_problem_rounded, color: Colors.orange),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Ada ${pendingComplaints.length} Laporan Tertunda',
+                                    style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.orange),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  const Text(
+                                    'Belum terunggah karena offline.',
+                                    style: TextStyle(fontSize: 12, color: Colors.orange),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            ElevatedButton(
+                              onPressed: () async {
+                                await complaintProvider.syncOfflineQueue();
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.orange,
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              child: const Text('Sinkronkan', style: TextStyle(fontSize: 12)),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                     Expanded(
                       child: complaintProvider.isLoading
                           ? const Center(
@@ -93,13 +168,13 @@ class _HomeScreenState extends State<HomeScreen> {
                                 valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
                               ),
                             )
-                          : filteredComplaints.isEmpty
+                          : allComplaintsToShow.isEmpty
                               ? _buildEmptyState(context, isDark)
                               : ListView.builder(
-                                  itemCount: filteredComplaints.length,
+                                  itemCount: allComplaintsToShow.length,
                                   physics: const BouncingScrollPhysics(),
                                   itemBuilder: (context, index) {
-                                    final complaint = filteredComplaints[index];
+                                    final complaint = allComplaintsToShow[index];
                                     return ComplaintCard(complaint: complaint);
                                   },
                                 ),

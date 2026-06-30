@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import '../core/constants/app_colors.dart';
 
@@ -49,6 +50,20 @@ class AppImage extends StatelessWidget {
 
     if (imageUrl.isEmpty) {
       return fallbackError;
+    }
+
+    if (!imageUrl.startsWith('http') && !imageUrl.startsWith('data:image/')) {
+      try {
+        return Image.file(
+          File(imageUrl),
+          width: width,
+          height: height,
+          fit: fit,
+          errorBuilder: (context, error, stackTrace) => fallbackError,
+        );
+      } catch (e) {
+        return fallbackError;
+      }
     }
 
     if (imageUrl.startsWith('data:image/')) {

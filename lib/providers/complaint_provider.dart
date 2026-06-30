@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/complaint_model.dart';
 import '../repositories/complaint_repository.dart';
 import '../services/firestore_service.dart';
+import '../services/offline_sync_service.dart';
 
 /// Penyedia state [ComplaintProvider] mengelola status dan aliran data pengaduan sampah.
 /// 
@@ -25,6 +26,12 @@ class ComplaintProvider extends ChangeNotifier {
   /// Menyimpan pesan kesalahan/error jika ada proses pengambilan atau modifikasi data yang gagal.
   String? _errorMessage;
 
+  /// Daftar ID laporan pengaduan (bukti selesai) yang saat ini masih dalam antrean sinkronisasi offline.
+  Set<String> _pendingSyncIds = {};
+
+  /// Daftar laporan pengaduan baru yang dibuat secara offline dan tertunda sinkronisasi.
+  List<OfflineComplaintItem> _pendingComplaints = [];
+
   /// Langganan (subscription) aliran data real-time pengaduan dari Firestore.
   StreamSubscription<List<ComplaintModel>>? _complaintsSubscription;
 
@@ -37,10 +44,61 @@ class ComplaintProvider extends ChangeNotifier {
   /// Mendapatkan pesan error/kesalahan terakhir.
   String? get errorMessage => _errorMessage;
 
+  /// Mendapatkan kumpulan ID laporan yang tertunda sinkronisasi.
+  Set<String> get pendingSyncIds => _pendingSyncIds;
+
+  /// Mendapatkan daftar pengaduan baru offline yang tertunda sinkronisasi.
+  List<OfflineComplaintItem> get pendingComplaints => _pendingComplaints;
+
+  /// Mengecek apakah suatu pengaduan sedang dalam status tertunda sinkronisasi.
+  bool isPendingSync(String complaintId) => _pendingSyncIds.contains(complaintId);
+
+  /// Memuat antrean offline dari penyimpanan lokal untuk mengetahui ID mana saja yang tertunda sinkronisasi.
+  Future<void> loadOfflineQueue() async {
+    final queue = await OfflineSyncService.getQueue();
+    _pendingSyncIds = queue.map((item) => item.complaintId).toSet();
+
+    _pendingComplaints = await OfflineSyncService.getComplaintQueue();
+    notifyListeners();
+  }
+
+  /// Sinkronisasi seluruh antrean offline secara otomatis (baik antrean laporan selesai maupun laporan baru)
+  Future<void> syncOfflineQueue() async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      // 1. Sinkronkan antrean bukti penyelesaian (petugas)
+      await OfflineSyncService.syncQueue(
+        onItemSynced: (id, success) {
+          if (success) {
+            _pendingSyncIds.remove(id);
+          }
+        },
+      );
+
+      // 2. Sinkronkan antrean pembuatan laporan baru (masyarakat)
+      await OfflineSyncService.syncComplaintQueue(
+        onItemSynced: (id, success) {
+          if (success) {
+            _pendingComplaints.removeWhere((item) => item.id == id);
+          }
+        },
+      );
+    } catch (e) {
+      _errorMessage = e.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
   /// Mendengarkan daftar pengaduan secara real-time berdasarkan [userId] pengirim (untuk versi Masyarakat).
   void listenToUserComplaints(String userId) {
     _isLoading = true;
     _errorMessage = null;
+    loadOfflineQueue();
     
     _complaintsSubscription?.cancel();
     _complaintsSubscription = _complaintRepository.getComplaintsStream(userId).listen(
@@ -61,6 +119,7 @@ class ComplaintProvider extends ChangeNotifier {
   void listenToAllComplaints() {
     _isLoading = true;
     _errorMessage = null;
+    loadOfflineQueue();
     
     _complaintsSubscription?.cancel();
     _complaintsSubscription = _complaintRepository.getAllComplaintsStream().listen(
@@ -79,9 +138,8 @@ class ComplaintProvider extends ChangeNotifier {
 
   /// Membuat pengaduan laporan penumpukan sampah baru.
   /// 
-  /// Alur proses: mengunggah [imageFile] foto ke penyimpanan base64 data URL,
-  /// menghasilkan ID unik laporan, membuat [ComplaintModel], lalu menyimpannya ke Firestore.
-  /// Mengembalikan `true` jika berhasil.
+  /// Mendukung pembuatan laporan secara offline. Jika offline, laporan akan diantrekan secara lokal.
+  /// Mengembalikan `true` jika berhasil disimpan (online atau antrean offline).
   Future<bool> createComplaint({
     required String userId,
     required String title,
@@ -95,6 +153,47 @@ class ComplaintProvider extends ChangeNotifier {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
+
+    final isOnline = await OfflineSyncService.hasInternetConnection();
+
+    if (!isOnline) {
+      try {
+        final complaintId = FirebaseFirestore.instance.collection('complaints').doc().id;
+        await OfflineSyncService.addToComplaintQueue(
+          id: complaintId,
+          userId: userId,
+          title: title,
+          description: description,
+          category: category,
+          imageFile: imageFile,
+          latitude: latitude,
+          longitude: longitude,
+          address: address,
+        );
+
+        _pendingComplaints.add(OfflineComplaintItem(
+          id: complaintId,
+          userId: userId,
+          title: title,
+          description: description,
+          category: category,
+          localImagePath: imageFile.path,
+          latitude: latitude,
+          longitude: longitude,
+          address: address,
+          createdAt: DateTime.now(),
+        ));
+
+        _isLoading = false;
+        notifyListeners();
+        return true;
+      } catch (e) {
+        _errorMessage = 'Gagal menyimpan laporan baru secara offline: $e';
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+    }
 
     try {
       // 1. Upload gambar ke Firebase Storage terlebih dahulu
@@ -125,10 +224,44 @@ class ComplaintProvider extends ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      _errorMessage = e.toString();
-      _isLoading = false;
-      notifyListeners();
-      return false;
+      // Jika unggahan/koneksi gagal saat proses online, alihkan ke antrean offline
+      try {
+        final complaintId = FirebaseFirestore.instance.collection('complaints').doc().id;
+        await OfflineSyncService.addToComplaintQueue(
+          id: complaintId,
+          userId: userId,
+          title: title,
+          description: description,
+          category: category,
+          imageFile: imageFile,
+          latitude: latitude,
+          longitude: longitude,
+          address: address,
+        );
+
+        _pendingComplaints.add(OfflineComplaintItem(
+          id: complaintId,
+          userId: userId,
+          title: title,
+          description: description,
+          category: category,
+          localImagePath: imageFile.path,
+          latitude: latitude,
+          longitude: longitude,
+          address: address,
+          createdAt: DateTime.now(),
+        ));
+
+        _errorMessage = 'Gagal mengirim online ($e). Laporan disimpan dalam antrean offline.';
+        _isLoading = false;
+        notifyListeners();
+        return true;
+      } catch (_) {
+        _errorMessage = e.toString();
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
     }
   }
 
@@ -171,12 +304,32 @@ class ComplaintProvider extends ChangeNotifier {
 
   /// Menyelesaikan laporan pengaduan sampah dengan status 'Selesai' dan melampirkan foto bukti pengerjaan ([evidenceFile]).
   /// 
-  /// Mengonversi foto bukti menjadi Base64, mengubah status laporan, dan menyimpan data ke Firestore.
-  /// Mengembalikan `true` jika berhasil.
+  /// Mendukung penyelesaian secara offline jika koneksi internet terputus.
+  /// Mengembalikan `true` jika berhasil disimpan (online atau antrean offline).
   Future<bool> resolveComplaint(String complaintId, File evidenceFile) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
+
+    final isOnline = await OfflineSyncService.hasInternetConnection();
+
+    if (!isOnline) {
+      try {
+        await OfflineSyncService.addToQueue(
+          complaintId: complaintId,
+          imageFile: evidenceFile,
+        );
+        _pendingSyncIds.add(complaintId);
+        _isLoading = false;
+        notifyListeners();
+        return true;
+      } catch (e) {
+        _errorMessage = 'Gagal menyimpan penyelesaian secara offline: $e';
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+    }
 
     try {
       // 1. Unggah bukti foto ke Storage
@@ -195,10 +348,23 @@ class ComplaintProvider extends ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      _errorMessage = e.toString();
-      _isLoading = false;
-      notifyListeners();
-      return false;
+      // Jika terjadi kesalahan jaringan saat mengunggah, alihkan ke antrean offline
+      try {
+        await OfflineSyncService.addToQueue(
+          complaintId: complaintId,
+          imageFile: evidenceFile,
+        );
+        _pendingSyncIds.add(complaintId);
+        _errorMessage = 'Gagal mengunggah online ($e). Laporan disimpan dalam antrean offline.';
+        _isLoading = false;
+        notifyListeners();
+        return true;
+      } catch (_) {
+        _errorMessage = e.toString();
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
     }
   }
 

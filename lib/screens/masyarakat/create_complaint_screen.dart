@@ -197,13 +197,15 @@ class _CreateComplaintScreenState extends State<CreateComplaintScreen> {
       longitude: _longitude!,
       address: _address!,
     );
-
     if (!mounted) return;
 
     if (success) {
+      final isOffline = complaintProvider.pendingComplaints.any((c) => c.title == _titleController.text.trim());
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Laporan pengaduan berhasil dikirim!'),
+        SnackBar(
+          content: Text(isOffline
+              ? 'Laporan disimpan secara offline dan akan disinkronisasikan otomatis.'
+              : 'Laporan pengaduan berhasil dikirim!'),
           backgroundColor: AppColors.statusSelesai,
         ),
       );

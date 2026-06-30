@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:geolocator/geolocator.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/utils/date_formatter.dart';
@@ -37,6 +38,11 @@ class _OfficerComplaintDetailScreenState extends State<OfficerComplaintDetailScr
   File? _evidenceFile;
   final ImagePicker _picker = ImagePicker();
   late FeedbackProvider _feedbackProvider;
+
+  double? _officerLatitude;
+  double? _officerLongitude;
+  bool _isLocatingOfficer = false;
+  double? _distanceKm;
 
   @override
   void initState() {
@@ -101,10 +107,61 @@ class _OfficerComplaintDetailScreenState extends State<OfficerComplaintDetailScr
     _fetchFuture = Provider.of<ComplaintProvider>(context, listen: false)
         .fetchComplaintById(widget.id);
     
+    _fetchFuture.then((complaint) {
+      if (complaint != null) {
+        _getOfficerLocation(complaint.latitude, complaint.longitude);
+      }
+    });
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<FeedbackProvider>(context, listen: false)
           .fetchFeedbackForComplaint(widget.id);
     });
+  }
+
+  Future<void> _getOfficerLocation(double targetLat, double targetLng) async {
+    if (!mounted) return;
+    setState(() {
+      _isLocatingOfficer = true;
+    });
+
+    try {
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+
+      if (permission == LocationPermission.whileInUse || permission == LocationPermission.always) {
+        final position = await Geolocator.getCurrentPosition(
+          locationSettings: const LocationSettings(
+            accuracy: LocationAccuracy.high,
+          ),
+        );
+
+        if (mounted) {
+          setState(() {
+            _officerLatitude = position.latitude;
+            _officerLongitude = position.longitude;
+            
+            final distanceInMeters = Geolocator.distanceBetween(
+              position.latitude,
+              position.longitude,
+              targetLat,
+              targetLng,
+            );
+            _distanceKm = distanceInMeters / 1000.0;
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('Gagal mengambil lokasi petugas: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLocatingOfficer = false;
+        });
+      }
+    }
   }
 
   Future<void> _pickEvidenceImage(ImageSource source) async {
@@ -169,9 +226,12 @@ class _OfficerComplaintDetailScreenState extends State<OfficerComplaintDetailScr
     if (!mounted) return;
 
     if (success) {
+      final isOffline = complaintProvider.isPendingSync(widget.id);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Laporan pengaduan berhasil diselesaikan! Bukti telah diunggah.'),
+        SnackBar(
+          content: Text(isOffline
+              ? 'Laporan berhasil diselesaikan secara offline & disimpan di antrean.'
+              : 'Laporan pengaduan berhasil diselesaikan! Bukti telah diunggah.'),
           backgroundColor: AppColors.statusSelesai,
         ),
       );
@@ -268,6 +328,8 @@ class _OfficerComplaintDetailScreenState extends State<OfficerComplaintDetailScr
 
             final complaint = snapshot.data!;
 
+            final isPendingSync = complaintProvider.isPendingSync(complaint.id);
+
             return SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
               child: Column(
@@ -280,6 +342,59 @@ class _OfficerComplaintDetailScreenState extends State<OfficerComplaintDetailScr
                     width: double.infinity,
                     fit: BoxFit.cover,
                   ),
+
+                  if (isPendingSync) ...[
+                    Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const Row(
+                            children: [
+                              Icon(Icons.sync_problem_rounded, color: Colors.orange),
+                              SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  'Penyelesaian Menunggu Sinkronisasi',
+                                  style: TextStyle(fontWeight: FontWeight.bold, color: Colors.orange),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Laporan ini diselesaikan secara offline. Data akan otomatis diunggah ketika koneksi internet stabil.',
+                            style: TextStyle(fontSize: 13, color: Colors.orange),
+                          ),
+                          const SizedBox(height: 12),
+                          ElevatedButton.icon(
+                            onPressed: () async {
+                              await complaintProvider.syncOfflineQueue();
+                              if (mounted) {
+                                _loadComplaint();
+                              }
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.orange,
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            icon: const Icon(Icons.sync_rounded),
+                            label: const Text('Sinkronkan Sekarang'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
 
                   Padding(
                     padding: const EdgeInsets.all(24.0),
@@ -339,9 +454,66 @@ class _OfficerComplaintDetailScreenState extends State<OfficerComplaintDetailScr
                               MapWidget(
                                 initialLatitude: complaint.latitude,
                                 initialLongitude: complaint.longitude,
+                                officerLatitude: _officerLatitude,
+                                officerLongitude: _officerLongitude,
                                 isReadOnly: true,
                                 showGeofence: false,
                               ),
+                              if (_isLocatingOfficer)
+                                const Padding(
+                                  padding: EdgeInsets.symmetric(vertical: 8.0),
+                                  child: Row(
+                                    children: [
+                                      SizedBox(
+                                        width: 16,
+                                        height: 16,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                                        ),
+                                      ),
+                                      SizedBox(width: 12),
+                                      Text(
+                                        'Mendapatkan lokasi petugas...',
+                                        style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                                      ),
+                                    ],
+                                  ),
+                                )
+                              else if (_distanceKm != null)
+                                Container(
+                                  margin: const EdgeInsets.only(top: 12),
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: isDark ? AppColors.surfaceDark : Colors.blue.withValues(alpha: 0.05),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color: isDark ? AppColors.borderDark : Colors.blue.withValues(alpha: 0.1),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      const Icon(Icons.directions_walk_rounded, color: Colors.blueAccent),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            const Text(
+                                              'Estimasi Jarak ke Lokasi Sampah',
+                                              style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                                            ),
+                                            const SizedBox(height: 2),
+                                            Text(
+                                              '${_distanceKm!.toStringAsFixed(2)} km dari posisi Anda',
+                                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
                               const SizedBox(height: 12),
                               SizedBox(
                                 width: double.infinity,
@@ -523,6 +695,29 @@ class _OfficerComplaintDetailScreenState extends State<OfficerComplaintDetailScr
   }
 
   Widget _buildActionPanel(ComplaintModel complaint, bool isDark) {
+    final complaintProvider = Provider.of<ComplaintProvider>(context, listen: false);
+    if (complaintProvider.isPendingSync(complaint.id)) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.orange.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.orange.withValues(alpha: 0.2)),
+        ),
+        child: const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.sync_rounded, color: Colors.orange),
+            SizedBox(width: 12),
+            Text(
+              'Menunggu Sinkronisasi Penyelesaian...',
+              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.orange),
+            ),
+          ],
+        ),
+      );
+    }
+
     final status = complaint.status.trim();
 
     switch (status) {

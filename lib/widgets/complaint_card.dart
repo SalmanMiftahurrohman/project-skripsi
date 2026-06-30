@@ -27,7 +27,6 @@ class ComplaintCard extends StatelessWidget {
     this.isOfficer = false,
     this.onTap,
   });
-
   /// Mendapatkan warna representasi status visual berdasarkan status laporan [status].
   Color _getStatusColor(String status) {
     switch (status.trim().toLowerCase()) {
@@ -43,11 +42,12 @@ class ComplaintCard extends StatelessWidget {
         return AppColors.statusSelesai;
       case 'ditolak':
         return Colors.redAccent;
+      case 'menunggu sinkronisasi':
+        return Colors.orange;
       default:
         return AppColors.textSecondary;
     }
   }
-
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
